@@ -46,4 +46,3 @@ export const getAllTags = () => {
 	return Array.from(tags).sort();
 };
 
-export const diaryData: DiaryItem[] = [];
