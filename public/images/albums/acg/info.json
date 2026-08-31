@@ -1,0 +1,10 @@
+{
+	"title": "杂图",
+	"hidden": false,
+	"description": "The world is vast, and you have to go explore it.",
+	"date": "2026-08-01",
+	"location": "Local",
+	"tags": ["cool"],
+	"layout": "masonry",
+	"columns": 3
+}

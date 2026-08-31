@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "一键启动 Mizuki 博客与 SCP 游戏 (F5 快捷键)",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/index.js",
+      "console": "integratedTerminal"
+    }
+  ]
+}
