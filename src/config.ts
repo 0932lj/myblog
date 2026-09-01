@@ -480,7 +480,7 @@ export const shareConfig: ShareConfig = {
 
 export const announcementConfig: AnnouncementConfig = {
 	title: "", // 公告标题，填空使用i18n字符串Key.announcement
-	content: "欢迎来到我的博客！这是一条示例通知。", // 公告内容
+	content: "欢迎来到我的博客！这是一条测试通知。", // 公告内容
 	closable: true, // 允许用户关闭公告
 	link: {
 		enable: true, // 启用链接

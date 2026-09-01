@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mizuki 博客后台管理系统</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github-dark.min.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="dark-theme">
+  <!-- 登录界面 -->
+  <div id="loginOverlay" class="login-overlay">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo">✦</div>
+        <h2>Mizuki Admin</h2>
+        <p>请输入管理员密码进入博客管理控制台</p>
+      </div>
+      <form id="loginForm" class="login-form">
+        <div class="form-group">
+          <label for="loginPassword">管理密码</label>
+          <div class="password-input-wrapper">
+            <input type="password" id="loginPassword" placeholder="输入 .env 中的 ADMIN_PASSWORD" required autocomplete="current-password">
+            <button type="button" id="togglePasswordBtn" class="btn-icon" title="显示/隐藏密码">👁️</button>
+          </div>
+        </div>
+        <div id="loginError" class="login-error hidden"></div>
+        <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block">
+          <span class="btn-text">登 录</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+      </form>
+      <div class="login-footer">
+        <a href="/" target="_blank">← 返回博客首页</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 后台主界面 -->
+  <div id="appContainer" class="app-container hidden">
+    <!-- 侧边导航栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-icon">✦</span>
+        <div class="brand-info">
+          <span class="brand-title">Mizuki Admin</span>
+          <span class="brand-badge">v9.0</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-tab="dashboard">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">仪表盘</span>
+        </button>
+        <button class="nav-item" data-tab="posts">
+          <span class="nav-icon">📝</span>
+          <span class="nav-text">文章管理</span>
+          <span id="navPostCount" class="nav-badge">0</span>
+        </button>
+        <button class="nav-item" data-tab="editor" id="navNewPostBtn">
+          <span class="nav-icon">✍️</span>
+          <span class="nav-text">新建文章</span>
+        </button>
+        <button class="nav-item" data-tab="albums">
+          <span class="nav-icon">📸</span>
+          <span class="nav-text">相册管理</span>
+          <span id="navAlbumsCount" class="nav-badge">0</span>
+        </button>
+        <button class="nav-item" data-tab="diaries">
+          <span class="nav-icon">📔</span>
+          <span class="nav-text">随手日记</span>
+          <span id="navDiariesCount" class="nav-badge">0</span>
+        </button>
+        <button class="nav-item" data-tab="anime">
+          <span class="nav-icon">🎬</span>
+          <span class="nav-text">我的追番</span>
+          <span id="navAnimeCount" class="nav-badge">0</span>
+        </button>
+        <button class="nav-item" data-tab="config">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-text">站点配置</span>
+        </button>
+        <button class="nav-item" data-tab="spec">
+          <span class="nav-icon">📄</span>
+          <span class="nav-text">独立页面</span>
+        </button>
+        <button class="nav-item" data-tab="media">
+          <span class="nav-icon">🖼️</span>
+          <span class="nav-text">媒体图库</span>
+        </button>
+        <button class="nav-item" data-tab="build">
+          <span class="nav-icon">🚀</span>
+          <span class="nav-text">构建发布</span>
+          <span id="navBuildDot" class="status-dot"></span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar">潜</div>
+          <div class="user-info">
+            <span class="user-name">Administrator</span>
+            <span class="user-role">已登录</span>
+          </div>
+        </div>
+        <button id="logoutBtn" class="btn-icon" title="退出登录">🚪</button>
+      </div>
+    </aside>
+
+    <!-- 主体区域 -->
+    <div class="main-wrapper">
+      <!-- 顶栏 -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button id="mobileMenuBtn" class="btn-icon mobile-only">☰</button>
+          <h1 id="pageTitle">仪表盘</h1>
+        </div>
+        <div class="topbar-right">
+          <button id="quickBuildBtn" class="btn btn-sm btn-accent" title="触发静态重新构建并发布">
+            <span>🚀 一键发布</span>
+          </button>
+          <a href="/" target="_blank" class="btn btn-sm btn-outline">
+            <span>🌐 查看前台</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- 内容视口 -->
+      <main class="content-viewport">
+        <!-- 1. 仪表盘 View -->
+        <section id="view-dashboard" class="tab-view active">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">📚</div>
+              <div class="stat-info">
+                <div class="stat-val" id="statTotalPosts">-</div>
+                <div class="stat-label">总文章数</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">✅</div>
+              <div class="stat-info">
+                <div class="stat-val" id="statPublishedPosts">-</div>
+                <div class="stat-label">已公开发布</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(236, 72, 153, 0.15); color: #f472b6;">📸</div>
+              <div class="stat-info">
+                <div class="stat-val" id="statAlbumsCount">-</div>
+                <div class="stat-label">相册画廊</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">📔</div>
+              <div class="stat-info">
+                <div class="stat-val" id="statDiariesCount">-</div>
+                <div class="stat-label">微语日记</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">🎬</div>
+              <div class="stat-info">
+                <div class="stat-val" id="statAnimeCount">-</div>
+                <div class="stat-label">追番记录</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">⚡</div>
+              <div class="stat-info">
+                <div class="stat-val" id="statBuildStatus">-</div>
+                <div class="stat-label">发布状态</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 快速入口与系统状态 -->
+          <div class="dashboard-grid">
+            <div class="card dashboard-card">
+              <div class="card-header">
+                <h3>⚡ 快捷操作</h3>
+              </div>
+              <div class="quick-actions">
+                <button class="btn btn-outline quick-btn" onclick="openNewPostEditor()">
+                  <span>✍️ 写新文章</span>
+                </button>
+                <button class="btn btn-outline quick-btn" onclick="openNewAlbumModal()">
+                  <span>📸 创建相册</span>
+                </button>
+                <button class="btn btn-outline quick-btn" onclick="openNewDiaryModal()">
+                  <span>📔 写篇日记</span>
+                </button>
+                <button class="btn btn-outline quick-btn" onclick="openNewAnimeModal()">
+                  <span>🎬 添加追番</span>
+                </button>
+                <button class="btn btn-outline quick-btn" onclick="switchTab('media')">
+                  <span>🖼️ 上传图片</span>
+                </button>
+                <button class="btn btn-accent quick-btn" onclick="triggerBuildNow()">
+                  <span>🚀 触发构建发布</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="card dashboard-card">
+              <div class="card-header">
+                <h3>🖥️ 系统环境</h3>
+              </div>
+              <div class="sys-info-list">
+                <div class="sys-info-item">
+                  <span class="label">Node.js 版本</span>
+                  <span class="val" id="sysNodeVer">-</span>
+                </div>
+                <div class="sys-info-item">
+                  <span class="label">运行模式</span>
+                  <span class="val badge badge-info">生产 / 开发混合</span>
+                </div>
+                <div class="sys-info-item">
+                  <span class="label">运行时间</span>
+                  <span class="val" id="sysUptime">-</span>
+                </div>
+                <div class="sys-info-item">
+                  <span class="label">发布主机</span>
+                  <span class="val badge badge-success">KataBump</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 最近文章 -->
+          <div class="card mt-6">
+            <div class="card-header flex-between">
+              <h3>📄 最近文章</h3>
+              <button class="btn btn-sm btn-ghost" onclick="switchTab('posts')">查看全部 →</button>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>标题</th>
+                    <th>分类</th>
+                    <th>发布日期</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="dashRecentPosts">
+                  <tr><td colspan="5" class="text-center py-4 text-muted">加载中...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. 文章管理 View -->
+        <section id="view-posts" class="tab-view">
+          <div class="view-toolbar">
+            <div class="toolbar-left">
+              <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="postSearchInput" placeholder="搜索文章标题、路径、标签...">
+              </div>
+              <select id="postCategoryFilter" class="form-select">
+                <option value="">全部分类</option>
+              </select>
+              <select id="postStatusFilter" class="form-select">
+                <option value="all">全部状态</option>
+                <option value="published">已发布</option>
+                <option value="draft">草稿</option>
+              </select>
+            </div>
+            <div class="toolbar-right">
+              <button class="btn btn-primary" onclick="openNewPostEditor()">
+                <span>➕ 新建文章</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>文章标题</th>
+                    <th>分类 / 标签</th>
+                    <th>字数</th>
+                    <th>发布日期</th>
+                    <th>状态</th>
+                    <th class="text-right">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="postsTableBody">
+                  <tr><td colspan="6" class="text-center py-8 text-muted">加载文章列表中...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. 文章编辑器 View -->
+        <section id="view-editor" class="tab-view">
+          <div class="editor-container">
+            <div class="editor-header flex-between">
+              <div class="editor-header-left">
+                <input type="text" id="editPostTitle" class="editor-title-input" placeholder="输入文章标题...">
+                <div class="editor-file-path">
+                  <span>文件路径: <code>src/content/posts/</code></span>
+                  <input type="text" id="editPostFilename" placeholder="article-slug.md">
+                </div>
+              </div>
+              <div class="editor-header-right">
+                <button type="button" class="btn btn-outline btn-sm" id="toggleMetaDrawerBtn">
+                  <span>⚙️ Frontmatter 属性</span>
+                </button>
+                <button type="button" class="btn btn-primary" id="savePostBtn">
+                  <span>💾 保存文章</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Frontmatter 侧边抽屉/折叠面板 -->
+            <div id="metaDrawer" class="meta-drawer hidden">
+              <div class="meta-grid">
+                <div class="form-group">
+                  <label for="editPostPublished">发布日期</label>
+                  <input type="date" id="editPostPublished" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label for="editPostCategory">分类</label>
+                  <input type="text" id="editPostCategory" class="form-input" placeholder="例如: 前端 / 日记 / 技术">
+                </div>
+                <div class="form-group">
+                  <label for="editPostTags">标签 (逗号分隔)</label>
+                  <input type="text" id="editPostTags" class="form-input" placeholder="例如: Astro, Tailwind, React">
+                </div>
+                <div class="form-group">
+                  <label for="editPostImage">封面图链接</label>
+                  <div class="input-with-action">
+                    <input type="text" id="editPostImage" class="form-input" placeholder="/images/cover.webp">
+                    <button type="button" class="btn btn-sm btn-outline" onclick="selectImageForField('editPostImage')">选择图片</button>
+                  </div>
+                </div>
+                <div class="form-group full-width">
+                  <label for="editPostDesc">文章摘要 / 描述</label>
+                  <textarea id="editPostDesc" class="form-textarea" rows="2" placeholder="文章简介，用于首页和 SEO 预览"></textarea>
+                </div>
+                <div class="form-group checkbox-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="editPostDraft">
+                    <span>设为草稿 (不公开发布)</span>
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="editPostPinned">
+                    <span>置顶文章</span>
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="editPostComment" checked>
+                    <span>开启评论区</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 左右分栏编辑器 -->
+            <div class="split-editor">
+              <div class="editor-pane">
+                <div class="pane-bar">
+                  <span>Markdown 编辑源码</span>
+                  <div class="editor-tools">
+                    <button type="button" class="btn-tool" onclick="insertMarkdown('**', '**', '加粗文字')" title="粗体"><b>B</b></button>
+                    <button type="button" class="btn-tool" onclick="insertMarkdown('*', '*', '斜体文字')" title="斜体"><i>I</i></button>
+                    <button type="button" class="btn-tool" onclick="insertMarkdown('### ', '', '三级标题')" title="标题">H3</button>
+                    <button type="button" class="btn-tool" onclick="insertMarkdown('> ', '', '引用文字')" title="引用">”</button>
+                    <button type="button" class="btn-tool" onclick="insertMarkdown('```ts\n', '\n```', '// 代码内容')" title="代码块">&lt;/&gt;</button>
+                    <button type="button" class="btn-tool" onclick="insertImageToEditor()" title="插入图片">🖼️</button>
+                    <button type="button" class="btn-tool" onclick="insertMarkdown('[', '](https://)', '链接文字')" title="超链接">🔗</button>
+                  </div>
+                </div>
+                <textarea id="markdownEditorArea" class="markdown-textarea" placeholder="在此输入 Markdown 正文..."></textarea>
+              </div>
+
+              <div class="preview-pane">
+                <div class="pane-bar">
+                  <span>实时预览 (Rendered)</span>
+                  <span id="editorWordCount" class="text-muted text-sm">0 字</span>
+                </div>
+                <div id="markdownPreviewArea" class="markdown-body"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. 相册管理 View (新增) -->
+        <section id="view-albums" class="tab-view">
+          <div class="view-toolbar">
+            <div class="toolbar-left">
+              <h2>📸 相册画廊管理</h2>
+              <p class="text-muted text-sm ml-4">管理 public/images/albums 中的所有相册与照片</p>
+            </div>
+            <div class="toolbar-right">
+              <button class="btn btn-primary" onclick="openNewAlbumModal()">
+                <span>➕ 新建相册</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 相册列表卡片网格 -->
+          <div id="albumsGrid" class="albums-grid mt-4">
+            <div class="card text-center py-12 text-muted">加载相册列表中...</div>
+          </div>
+        </section>
+
+        <!-- 5. 随手日记 View (新增) -->
+        <section id="view-diaries" class="tab-view">
+          <div class="view-toolbar">
+            <div class="toolbar-left">
+              <h2>📔 随手微语日记</h2>
+              <p class="text-muted text-sm ml-4">管理 src/data/diary.ts 中的日记动态</p>
+            </div>
+            <div class="toolbar-right">
+              <button class="btn btn-primary" onclick="openNewDiaryModal()">
+                <span>➕ 写新日记</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 日记列表时间线 -->
+          <div id="diariesTimeline" class="diaries-timeline mt-6">
+            <div class="card text-center py-12 text-muted">加载日记列表中...</div>
+          </div>
+        </section>
+
+        <!-- 6. 追番管理 View (新增) -->
+        <section id="view-anime" class="tab-view">
+          <div class="view-toolbar">
+            <div class="toolbar-left">
+              <div class="filter-tabs" id="animeFilterTabs">
+                <button class="filter-tab-btn active" data-status="all">全部番剧</button>
+                <button class="filter-tab-btn" data-status="watching">正在追</button>
+                <button class="filter-tab-btn" data-status="completed">已看完</button>
+                <button class="filter-tab-btn" data-status="planned">想看</button>
+              </div>
+            </div>
+            <div class="toolbar-right">
+              <button class="btn btn-primary" onclick="openNewAnimeModal()">
+                <span>➕ 添加追番</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 追番卡片网格 -->
+          <div id="animeGrid" class="anime-grid mt-6">
+            <div class="card text-center py-12 text-muted">加载番剧列表中...</div>
+          </div>
+        </section>
+
+        <!-- 7. 站点配置 View -->
+        <section id="view-config" class="tab-view">
+          <div class="card max-w-4xl">
+            <div class="card-header">
+              <h3>⚙️ 站点与博主配置</h3>
+              <p class="text-muted text-sm">直接维护 src/config.ts 中的核心参数</p>
+            </div>
+            <form id="configForm" class="config-form">
+              <div class="form-section-title">🌐 基础站点信息</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="confTitle">站点名称 (title)</label>
+                  <input type="text" id="confTitle" class="form-input" required>
+                </div>
+                <div class="form-group">
+                  <label for="confSubtitle">站点副标题 (subtitle)</label>
+                  <input type="text" id="confSubtitle" class="form-input">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="confSiteURL">站点线上地址 (siteURL)</label>
+                <input type="url" id="confSiteURL" class="form-input" placeholder="https://yourblog.domain">
+              </div>
+
+              <div class="form-section-title mt-6">🎨 首页大横幅文字 (Banner)</div>
+              <div class="form-group">
+                <label for="confBannerTitle">横幅主标题</label>
+                <input type="text" id="confBannerTitle" class="form-input">
+              </div>
+              <div class="form-group">
+                <label for="confBannerSubtitles">打字机副标题列表 (每行一条)</label>
+                <textarea id="confBannerSubtitles" class="form-textarea" rows="4"></textarea>
+              </div>
+
+              <div class="form-section-title mt-6">👤 个人资料卡片 (Profile)</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="confProfileName">昵称 (name)</label>
+                  <input type="text" id="confProfileName" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label for="confProfileAvatar">头像路径 (avatar)</label>
+                  <div class="input-with-action">
+                    <input type="text" id="confProfileAvatar" class="form-input">
+                    <button type="button" class="btn btn-sm btn-outline" onclick="selectImageForField('confProfileAvatar')">选择头像</button>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="confProfileBio">个人签名 (bio)</label>
+                <textarea id="confProfileBio" class="form-textarea" rows="2"></textarea>
+              </div>
+
+              <div class="form-section-title mt-6">📢 全局公告 (Announcement)</div>
+              <div class="form-group">
+                <label for="confAnnouncement">公告内容 (支持 HTML / 留空则关闭)</label>
+                <textarea id="confAnnouncement" class="form-textarea" rows="2"></textarea>
+              </div>
+
+              <div class="form-actions mt-8">
+                <button type="submit" class="btn btn-primary">
+                  <span>💾 保存站点配置</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- 8. 独立页面 View -->
+        <section id="view-spec" class="tab-view">
+          <div class="card max-w-4xl">
+            <div class="card-header flex-between">
+              <div>
+                <h3>📄 关于页面编辑 (About Me)</h3>
+                <p class="text-muted text-sm">维护 <code>src/content/spec/about.md</code> 内容</p>
+              </div>
+              <button class="btn btn-primary" id="saveSpecBtn">
+                <span>💾 保存关于页</span>
+              </button>
+            </div>
+            <div class="split-editor mt-4" style="height: 600px;">
+              <div class="editor-pane">
+                <textarea id="specEditorArea" class="markdown-textarea" placeholder="编辑关于我页面 Markdown..."></textarea>
+              </div>
+              <div class="preview-pane">
+                <div id="specPreviewArea" class="markdown-body"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 9. 媒体图库 View (升级) -->
+        <section id="view-media" class="tab-view">
+          <!-- 上传控制区 -->
+          <div class="card upload-card mb-6">
+            <div class="upload-header flex-between mb-4">
+              <div>
+                <h3>☁️ 图片与素材上传</h3>
+                <p class="text-muted text-sm">支持 PNG, JPG, JPEG, WEBP, GIF, SVG</p>
+              </div>
+              <div class="upload-dest-select">
+                <label for="uploadDestFolder" class="mr-2 text-sm text-muted">上传目标目录:</label>
+                <select id="uploadDestFolder" class="form-select">
+                  <option value="">文章/通用图片 (public/images)</option>
+                  <option value="diary">日记插图 (public/images/diary)</option>
+                  <option value="device">设备图片 (public/images/device)</option>
+                </select>
+              </div>
+            </div>
+            <div class="drop-zone" id="mediaDropZone">
+              <div class="drop-icon">☁️</div>
+              <p>点击或拖拽图片到此处上传</p>
+              <input type="file" id="mediaFileInput" accept="image/*" multiple class="hidden">
+              <button type="button" class="btn btn-sm btn-primary mt-3" onclick="document.getElementById('mediaFileInput').click()">选择本地文件</button>
+            </div>
+          </div>
+
+          <!-- 图片展示区 -->
+          <div class="card">
+            <div class="card-header flex-between">
+              <div class="flex items-center gap-3">
+                <h3>🖼️ 全站图片素材</h3>
+                <div class="filter-tabs ml-4" id="mediaCategoryTabs">
+                  <button class="filter-tab-btn active" data-cat="all">全部 (<span id="mediaTotalCount">0</span>)</button>
+                  <button class="filter-tab-btn" data-cat="文章图片">文章插图</button>
+                  <button class="filter-tab-btn" data-cat="相册">相册照片</button>
+                  <button class="filter-tab-btn" data-cat="日记插图">日记插图</button>
+                  <button class="filter-tab-btn" data-cat="设备图片">设备素材</button>
+                </div>
+              </div>
+              <button class="btn btn-sm btn-outline" onclick="fetchMediaList()">🔄 刷新图库</button>
+            </div>
+            <div id="mediaGrid" class="media-grid mt-4">
+              <div class="text-center py-12 text-muted">加载图片列表中...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 10. 构建发布 View -->
+        <section id="view-build" class="tab-view">
+          <div class="card max-w-4xl">
+            <div class="card-header flex-between">
+              <div>
+                <h3>🚀 一键静态构建发布</h3>
+                <p class="text-muted text-sm">执行 <code>pnpm run build</code> 生成最新的静态页面产物</p>
+              </div>
+              <button class="btn btn-accent" id="startBuildBtn">
+                <span>⚡ 开始重新构建</span>
+              </button>
+            </div>
+
+            <div class="build-status-box mt-4">
+              <div class="build-status-header">
+                <span class="label">当前构建状态:</span>
+                <span id="buildStatusBadge" class="badge badge-info">空闲</span>
+              </div>
+              <div class="build-log-console" id="buildLogConsole">
+                <div class="log-line text-muted">// 点击上方按钮即可开始静态编译构建...</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- 弹窗：新建/编辑相册 -->
+  <div id="albumModal" class="modal hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="albumModalTitle">新建相册</h3>
+        <button class="btn-close" onclick="closeModal('albumModal')">×</button>
+      </div>
+      <form id="albumForm">
+        <div class="form-group">
+          <label for="albumIdInput">相册英文文件夹名 (ID)</label>
+          <input type="text" id="albumIdInput" class="form-input" placeholder="例如: acg, travel_2026" required>
+        </div>
+        <div class="form-group">
+          <label for="albumTitleInput">相册展示标题</label>
+          <input type="text" id="albumTitleInput" class="form-input" placeholder="例如: 动漫壁纸 / 杭州之旅" required>
+        </div>
+        <div class="form-group">
+          <label for="albumDescInput">相册描述</label>
+          <textarea id="albumDescInput" class="form-textarea" rows="2" placeholder="输入相册简述..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="albumDateInput">日期</label>
+            <input type="date" id="albumDateInput" class="form-input">
+          </div>
+          <div class="form-group">
+            <label for="albumLocationInput">地点 (location)</label>
+            <input type="text" id="albumLocationInput" class="form-input" placeholder="例如: Local / 杭州">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="albumTagsInput">标签 (逗号分隔)</label>
+            <input type="text" id="albumTagsInput" class="form-input" placeholder="例如: 摄影, 二次元">
+          </div>
+          <div class="form-group">
+            <label for="albumColumnsInput">展示列数</label>
+            <select id="albumColumnsInput" class="form-select">
+              <option value="2">2 列</option>
+              <option value="3" selected>3 列 (推荐)</option>
+              <option value="4">4 列</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="albumHiddenInput">
+            <span>隐藏相册 (不公开在前台展示)</span>
+          </label>
+        </div>
+        <div class="modal-footer mt-6">
+          <button type="button" class="btn btn-outline" onclick="closeModal('albumModal')">取消</button>
+          <button type="submit" class="btn btn-primary">保存相册</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 弹窗：相册照片管理抽屉 -->
+  <div id="albumPhotosModal" class="modal hidden">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header flex-between">
+        <div>
+          <h3 id="albumPhotosTitle">相册照片管理</h3>
+          <p id="albumPhotosDesc" class="text-muted text-sm"></p>
+        </div>
+        <button class="btn-close" onclick="closeModal('albumPhotosModal')">×</button>
+      </div>
+      <div class="album-photos-manager-body">
+        <!-- 上传照片区 -->
+        <div class="drop-zone-compact mb-4" id="albumPhotoDropZone">
+          <span>📸 点击或拖拽照片上传到当前相册</span>
+          <input type="file" id="albumPhotoFileInput" accept="image/*" multiple class="hidden">
+        </div>
+        <!-- 照片网格 -->
+        <div id="albumPhotosGrid" class="album-photos-grid">
+          <div class="text-center py-8 text-muted">暂无照片</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗：新建/编辑日记 -->
+  <div id="diaryModal" class="modal hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="diaryModalTitle">写新日记</h3>
+        <button class="btn-close" onclick="closeModal('diaryModal')">×</button>
+      </div>
+      <form id="diaryForm">
+        <input type="hidden" id="diaryEditId">
+        <div class="form-group">
+          <label for="diaryContentInput">日记内容</label>
+          <textarea id="diaryContentInput" class="form-textarea" rows="4" placeholder="写点今天的感悟与心情吧..." required></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="diaryDateInput">发布时间</label>
+            <input type="datetime-local" id="diaryDateInput" class="form-input">
+          </div>
+          <div class="form-group">
+            <label for="diaryMoodInput">今日心情 (Mood)</label>
+            <input type="text" id="diaryMoodInput" class="form-input" placeholder="例如: 🌸 开心 / ☕ 平静 / 🌧️ 忧郁">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="diaryLocationInput">地点 (Location)</label>
+            <input type="text" id="diaryLocationInput" class="form-input" placeholder="例如: 杭州 / 卧室">
+          </div>
+          <div class="form-group">
+            <label for="diaryTagsInput">标签 (逗号分隔)</label>
+            <input type="text" id="diaryTagsInput" class="form-input" placeholder="例如: 日常, 随笔">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="diaryImagesInput">插图路径 (每行一张图片链接，如 /images/diary/sakura.jpg)</label>
+          <div class="input-with-action">
+            <textarea id="diaryImagesInput" class="form-textarea" rows="2" placeholder="/images/diary/1.webp"></textarea>
+            <button type="button" class="btn btn-sm btn-outline" onclick="selectImageForDiary()">选择图库</button>
+          </div>
+        </div>
+        <div class="modal-footer mt-6">
+          <button type="button" class="btn btn-outline" onclick="closeModal('diaryModal')">取消</button>
+          <button type="submit" class="btn btn-primary">发布日记</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 弹窗：新建/编辑番剧 -->
+  <div id="animeModal" class="modal hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="animeModalTitle">添加追番</h3>
+        <button class="btn-close" onclick="closeModal('animeModal')">×</button>
+      </div>
+      <form id="animeForm">
+        <input type="hidden" id="animeEditIndex">
+        <div class="form-group">
+          <label for="animeTitleInput">番剧名称</label>
+          <input type="text" id="animeTitleInput" class="form-input" placeholder="例如: 莉可丽丝 / 葬送的芙莉莲" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="animeStatusInput">观看状态</label>
+            <select id="animeStatusInput" class="form-select">
+              <option value="watching">正在追 (watching)</option>
+              <option value="completed">已看完 (completed)</option>
+              <option value="planned">想看 (planned)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="animeRatingInput">评分 (1.0 ~ 10.0)</label>
+            <input type="number" step="0.1" min="1" max="10" id="animeRatingInput" class="form-input" value="9.0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="animeProgressInput">已看集数</label>
+            <input type="number" min="0" id="animeProgressInput" class="form-input" value="0">
+          </div>
+          <div class="form-group">
+            <label for="animeTotalInput">总集数</label>
+            <input type="number" min="1" id="animeTotalInput" class="form-input" value="12">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="animeCoverInput">封面图片链接</label>
+          <div class="input-with-action">
+            <input type="text" id="animeCoverInput" class="form-input" placeholder="/assets/anime/cover.webp 或外部链接">
+            <button type="button" class="btn btn-sm btn-outline" onclick="selectImageForField('animeCoverInput')">选择图库</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="animeYearInput">上映年份</label>
+            <input type="text" id="animeYearInput" class="form-input" placeholder="例如: 2024">
+          </div>
+          <div class="form-group">
+            <label for="animeStudioInput">制作公司 (Studio)</label>
+            <input type="text" id="animeStudioInput" class="form-input" placeholder="例如: A-1 Pictures / 京都动画">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="animeGenreInput">类型标签 (逗号分隔)</label>
+          <input type="text" id="animeGenreInput" class="form-input" placeholder="例如: 治愈, 日常, 战斗">
+        </div>
+        <div class="form-group">
+          <label for="animeLinkInput">观看链接 (B站 / Bangumi)</label>
+          <input type="url" id="animeLinkInput" class="form-input" placeholder="https://www.bilibili.com/bangumi/media/...">
+        </div>
+        <div class="form-group">
+          <label for="animeDescInput">简介 / 评价</label>
+          <textarea id="animeDescInput" class="form-textarea" rows="2" placeholder="简要介绍或观后感..."></textarea>
+        </div>
+        <div class="modal-footer mt-6">
+          <button type="button" class="btn btn-outline" onclick="closeModal('animeModal')">取消</button>
+          <button type="submit" class="btn btn-primary">保存番剧</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 全局 Toast 提示容器 -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- 依赖脚本 -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11/highlight.min.js"></script>
+  <script src="/admin/admin.js"></script>
+</body>
+</html>

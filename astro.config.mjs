@@ -29,6 +29,55 @@ import { remarkContent } from "./src/plugins/remark-content.mjs";
 import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkFixGithubAdmonitions } from "./src/plugins/remark-fix-github-admonitions.js";
 import { remarkMermaid } from "./src/plugins/remark-mermaid.js";
+import { handleAdminRequest } from "./scripts/admin-api.js";
+
+function adminIntegration() {
+	return {
+		name: "mizuki-admin-integration",
+		hooks: {
+			"astro:server:setup": ({ server }) => {
+				server.middlewares.use(async (req, res, next) => {
+					const url = req.url ? req.url.split("?")[0] : "";
+					if (url.startsWith("/api/admin")) {
+						try {
+							const handled = await handleAdminRequest(req, res);
+							if (handled) return;
+						} catch (e) {
+							console.error("[Admin API Error]", e);
+							res.writeHead(500, { "Content-Type": "application/json" });
+							res.end(JSON.stringify({ success: false, message: e.message }));
+							return;
+						}
+					}
+					next();
+				});
+			},
+		},
+	};
+}
+
+function adminDevPlugin() {
+	return {
+		name: "admin-api-dev-middleware",
+		configureServer(server) {
+			server.middlewares.use(async (req, res, next) => {
+				const url = req.url ? req.url.split("?")[0] : "";
+				if (url.startsWith("/api/admin")) {
+					try {
+						const handled = await handleAdminRequest(req, res);
+						if (handled) return;
+					} catch (e) {
+						console.error("[Dev Admin API Error]", e);
+						res.writeHead(500, { "Content-Type": "application/json" });
+						res.end(JSON.stringify({ success: false, message: e.message }));
+						return;
+					}
+				}
+				next();
+			});
+		},
+	};
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -117,6 +166,7 @@ export default defineConfig({
 			preprocess: vitePreprocess(),
 		}),
 		sitemap(),
+		adminIntegration(),
 	],
 	markdown: {
 		remarkPlugins: [
@@ -176,7 +226,7 @@ export default defineConfig({
 		],
 	},
 	vite: {
-		plugins: [tailwindcss()],
+		plugins: [tailwindcss(), adminDevPlugin()],
 		build: {
 			// 静态资源处理优化，防止小图片转 base64 导致 HTML 体积过大
 			assetsInlineLimit: 4096,

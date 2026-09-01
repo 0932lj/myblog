@@ -3,13 +3,18 @@ import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { handleAdminRequest } from './scripts/admin-api.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || process.env.SERVER_PORT || 4321;
-// 如果已构建 dist 目录，则托管 dist，否则托管 public 目录
-const PUBLIC_DIR = fs.existsSync(path.join(__dirname, 'dist')) ? path.join(__dirname, 'dist') : path.join(__dirname, 'public');
+const ADMIN_DIR = path.join(__dirname, 'public', 'admin');
+
+// 动态获取静态文件目录 (构建后优先使用 dist，否则使用 public)
+function getPublicDir() {
+  return fs.existsSync(path.join(__dirname, 'dist')) ? path.join(__dirname, 'dist') : path.join(__dirname, 'public');
+}
 
 // 配置的 DeepSeek API Key
 const CUSTOM_API_KEY = process.env.DEEPSEEK_API_KEY || "sk-7c4f6d9881be4a23b2785140b42d9f5a";
@@ -81,10 +86,47 @@ function generateFallbackChatResponse(bodyStr) {
   });
 }
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   let reqPath = decodeURIComponent(req.url.split('?')[0]);
 
-  // 处理 API 代理请求 (/api-proxy/...)
+  // 1. 处理后台管理系统 API (/api/admin/...)
+  try {
+    const handledAdmin = await handleAdminRequest(req, res);
+    if (handledAdmin) return;
+  } catch (err) {
+    console.error('[Admin API Error]', err);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: false, message: '服务器内部错误: ' + err.message }));
+    return;
+  }
+
+  // 2. 处理后台管理前端页面 (/admin, /admin/...)
+  if (reqPath === '/admin' || reqPath === '/admin/') {
+    const adminIndex = path.join(ADMIN_DIR, 'index.html');
+    if (fs.existsSync(adminIndex)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      fs.createReadStream(adminIndex).pipe(res);
+      return;
+    }
+  } else if (reqPath.startsWith('/admin/')) {
+    const subPath = reqPath.replace(/^\/admin\//, '');
+    let adminFile = path.join(ADMIN_DIR, subPath);
+    if (fs.existsSync(adminFile) && fs.statSync(adminFile).isFile()) {
+      const ext = path.extname(adminFile).toLowerCase();
+      res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream' });
+      fs.createReadStream(adminFile).pipe(res);
+      return;
+    }
+    // SPA Fallback
+    const adminIndex = path.join(ADMIN_DIR, 'index.html');
+    if (fs.existsSync(adminIndex)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      fs.createReadStream(adminIndex).pipe(res);
+      return;
+    }
+  }
+
+  // 3. 处理 API 代理请求 (/api-proxy/...)
   if (reqPath.startsWith('/api-proxy')) {
     let bodyBuffers = [];
     req.on('data', chunk => bodyBuffers.push(chunk));
@@ -146,17 +188,26 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // 静态文件路由
-  let filePath = path.join(PUBLIC_DIR, reqPath);
+  // 4. 静态文件路由
+  const publicDir = getPublicDir();
+  let filePath = path.join(publicDir, reqPath);
 
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
     filePath = path.join(filePath, 'index.html');
   }
 
+  // 如果在 dist 没找到但在 public 中存在 (比如刚上传的图片 /images/...)
+  if (!fs.existsSync(filePath)) {
+    const directPublicPath = path.join(__dirname, 'public', reqPath);
+    if (fs.existsSync(directPublicPath) && fs.statSync(directPublicPath).isFile()) {
+      filePath = directPublicPath;
+    }
+  }
+
   if (!fs.existsSync(filePath)) {
     // 404 fallback to dist/404.html or index.html
-    const fallback404 = path.join(PUBLIC_DIR, '404.html');
-    filePath = fs.existsSync(fallback404) ? fallback404 : path.join(PUBLIC_DIR, 'index.html');
+    const fallback404 = path.join(publicDir, '404.html');
+    filePath = fs.existsSync(fallback404) ? fallback404 : path.join(publicDir, 'index.html');
   }
 
   const ext = path.extname(filePath).toLowerCase();
@@ -177,6 +228,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`====================================================`);
   console.log(`Mizuki 博客 & SCP 游戏服务器已启动！`);
   console.log(`博客地址: http://127.0.0.1:${PORT}/`);
+  console.log(`管理后台: http://127.0.0.1:${PORT}/admin/`);
   console.log(`游戏地址: http://127.0.0.1:${PORT}/game/`);
   console.log(`====================================================`);
 });

@@ -1,10 +1,14 @@
 ---
 title: "《SCP: Protocol Omega // Project Silent V2.4》游戏项目与全屏在线体验"
 published: 2026-08-31
-description: "基于 SCP 基金会世界观与微信 OS 仿真架构的文字解密与 AI 互动博弈 Web 游戏项目发布与在线试玩。"
-tags: ["SCP", "DeepSeek", "WebGame", "React", "AI"]
-category: "Projects"
+updated: 2026-09-01
+description: 基于 SCP 基金会世界观与微信 OS 仿真架构的文字解密与 AI 互动博弈 Web 游戏项目发布与在线试玩。
+image: /images/wallhaven-d8w5d3.jpg
+tags: [SCP, DeepSeek, WebGame, React, AI]
+category: Projects
 draft: false
+pinned: false
+comment: true
 ---
 
 ## 🎮 游戏简介

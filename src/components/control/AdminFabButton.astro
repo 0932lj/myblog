@@ -1,0 +1,16 @@
+---
+import FloatingButton from "@components/common/FloatingButton.astro";
+---
+
+<FloatingButton
+	id="admin-fab-btn"
+	icon="material-symbols:admin-panel-settings-outline-rounded"
+	ariaLabel="博客管理后台"
+	onclick="openAdminDashboard()"
+/>
+
+<script is:raw is:inline define:vars={{ adminUrl: "/admin/" }}>
+	window.openAdminDashboard = function () {
+		window.open(adminUrl, "_blank");
+	};
+</script>
