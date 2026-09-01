@@ -222,6 +222,26 @@ function initEvents() {
     drawer.classList.toggle('hidden');
   });
 
+  // 标题输入自动生成文件名 slug
+  const titleInput = document.getElementById('editPostTitle');
+  const filenameInput = document.getElementById('editPostFilename');
+  titleInput.addEventListener('input', (e) => {
+    if (!state.currentPost) {
+      const val = e.target.value.trim();
+      if (val && (!filenameInput.dataset.manual || filenameInput.value === '')) {
+        const slug = val
+          .toLowerCase()
+          .replace(/[^\w\u4e00-\u9fa5\s-]/g, '')
+          .replace(/[\s_]+/g, '-')
+          .slice(0, 40);
+        filenameInput.value = `${slug || 'article'}.md`;
+      }
+    }
+  });
+  filenameInput.addEventListener('input', () => {
+    filenameInput.dataset.manual = 'true';
+  });
+
   // Markdown 编辑器实时同步
   const editorArea = document.getElementById('markdownEditorArea');
   editorArea.addEventListener('input', updateMarkdownPreview);
@@ -368,6 +388,12 @@ async function fetchDashboardStats() {
 }
 
 // ==================== 2. 文章管理模块 ====================
+function getPostFrontendUrl(post) {
+  const rel = post.relativePath || '';
+  const slug = rel.replace(/\.(md|mdx|markdown)$/i, '').replace(/\\/g, '/');
+  return `/posts/${slug}/`;
+}
+
 async function fetchPostsList() {
   try {
     const res = await apiRequest('/posts');
@@ -435,6 +461,7 @@ function filterAndRenderPosts() {
       </td>
       <td class="text-right">
         <div class="btn-group">
+          <a class="btn btn-sm btn-outline" href="${getPostFrontendUrl(post)}" target="_blank" title="在新标签页中查看前台文章">👁️ 查看</a>
           <button class="btn btn-sm btn-outline" onclick="openEditPost('${encodeURIComponent(post.relativePath)}')">✏️ 编辑</button>
           <button class="btn btn-sm btn-danger" onclick="deletePost('${encodeURIComponent(post.relativePath)}')">🗑️ 删除</button>
         </div>

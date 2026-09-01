@@ -158,7 +158,9 @@ export function stringifyFrontmatter(fm, content) {
     } else if (typeof value === 'boolean' || typeof value === 'number') {
       lines.push(`${key}: ${value}`);
     } else if (typeof value === 'string') {
-      if (value.includes(':') || value.includes('#') || value.includes('\n')) {
+      if (value === '') {
+        lines.push(`${key}: ''`);
+      } else if (value.includes(':') || value.includes('#') || value.includes('\n')) {
         lines.push(`${key}: "${value.replace(/"/g, '\\"')}"`);
       } else {
         lines.push(`${key}: ${value}`);

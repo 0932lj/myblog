@@ -548,6 +548,243 @@ body {
   margin-bottom: 4px;
 }
 
+/* ==================== 文章编辑器 (Post Editor) ==================== */
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.editor-header {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.editor-header-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editor-title-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-main);
+  font-size: 1.5rem;
+  font-weight: 700;
+  outline: none;
+  padding: 4px 0;
+  transition: border-color 0.2s;
+}
+
+.editor-title-input:focus {
+  border-bottom-color: var(--primary);
+}
+
+.editor-title-input::placeholder {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.editor-file-path {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.editor-file-path code {
+  color: #818cf8;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+}
+
+.editor-file-path input {
+  flex: 1;
+  max-width: 320px;
+  background: #14161f;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  padding: 4px 10px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.editor-file-path input:focus {
+  border-color: var(--primary);
+}
+
+.editor-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Frontmatter 抽屉面板 */
+.meta-drawer {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideDown 0.25s ease-out;
+}
+
+.meta-drawer.hidden {
+  display: none !important;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.meta-grid .form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.meta-grid .checkbox-group {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+}
+
+.input-with-action {
+  display: flex;
+  gap: 8px;
+}
+
+.input-with-action .form-input {
+  flex: 1;
+}
+
+/* 左右分栏编辑器 */
+.split-editor {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  height: calc(100vh - 240px);
+  min-height: 550px;
+  width: 100%;
+}
+
+.editor-pane,
+.preview-pane {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.pane-bar {
+  background: #14161f;
+  border-bottom: 1px solid var(--border-color);
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  user-select: none;
+}
+
+.editor-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-tool {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  transition: all 0.2s;
+}
+
+.btn-tool:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.markdown-textarea {
+  flex: 1;
+  width: 100%;
+  background: #10121a;
+  border: none;
+  color: #e2e8f0;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.7;
+  padding: 16px;
+  resize: none;
+  outline: none;
+  tab-size: 2;
+  box-sizing: border-box;
+}
+
+.markdown-body {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  color: var(--text-main);
+  font-size: 15px;
+  line-height: 1.75;
+  background: #12141c;
+}
+
+.markdown-body h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 1rem; color: #fff; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+.markdown-body h2 { font-size: 1.45rem; font-weight: 600; margin: 1.5rem 0 0.75rem 0; color: #fff; }
+.markdown-body h3 { font-size: 1.2rem; font-weight: 600; margin: 1.2rem 0 0.5rem 0; color: #f1f5f9; }
+.markdown-body p { margin-bottom: 1rem; color: #cbd5e1; }
+.markdown-body blockquote { border-left: 4px solid var(--primary); padding: 8px 16px; margin: 1rem 0; background: rgba(99, 102, 241, 0.08); border-radius: 0 8px 8px 0; color: #94a3b8; }
+.markdown-body code { background: rgba(255, 255, 255, 0.1); color: #f43f5e; padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+.markdown-body pre { background: #0b0d14; border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; margin: 1rem 0; overflow-x: auto; }
+.markdown-body pre code { background: transparent; color: #e2e8f0; padding: 0; }
+.markdown-body ul, .markdown-body ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+.markdown-body li { margin-bottom: 0.35rem; color: #cbd5e1; }
+.markdown-body img { max-width: 100%; border-radius: 8px; margin: 1rem 0; box-shadow: var(--shadow-sm); }
+.markdown-body table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.markdown-body th, .markdown-body td { border: 1px solid var(--border-color); padding: 8px 12px; }
+.markdown-body th { background: #1a1d28; font-weight: 600; }
+
+
 /* ==================== 按钮与输入框 ==================== */
 .btn {
   display: inline-flex;
