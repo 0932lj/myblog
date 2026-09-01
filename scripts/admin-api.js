@@ -12,7 +12,9 @@ const rootDir = path.resolve(__dirname, '..');
 loadEnv();
 
 const POSTS_DIR = path.join(rootDir, 'src', 'content', 'posts');
+const POSTS_BACKUP_DIR = path.join(rootDir, 'src', 'content', 'posts.backup');
 const SPEC_DIR = path.join(rootDir, 'src', 'content', 'spec');
+const SPEC_BACKUP_DIR = path.join(rootDir, 'src', 'content', 'spec.backup');
 const CONFIG_FILE = path.join(rootDir, 'src', 'config.ts');
 const DIARY_FILE = path.join(rootDir, 'src', 'data', 'diary.ts');
 const ANIME_FILE = path.join(rootDir, 'src', 'data', 'anime.ts');
@@ -20,6 +22,23 @@ const IMAGES_DIR = path.join(rootDir, 'public', 'images');
 const ALBUMS_DIR = path.join(rootDir, 'public', 'images', 'albums');
 const DIARY_IMAGES_DIR = path.join(rootDir, 'public', 'images', 'diary');
 const ADMIN_DIR = path.join(rootDir, 'public', 'admin');
+
+// 自动从 backup 恢复文章目录（防止历史 sync 脚本备份导致目录变空）
+if (fs.existsSync(POSTS_BACKUP_DIR) && (!fs.existsSync(POSTS_DIR) || fs.readdirSync(POSTS_DIR).length === 0)) {
+  try {
+    if (fs.existsSync(POSTS_DIR)) fs.rmSync(POSTS_DIR, { recursive: true, force: true });
+    fs.renameSync(POSTS_BACKUP_DIR, POSTS_DIR);
+    console.log('✅ 已自动从 posts.backup 恢复本地文章目录！');
+  } catch (e) {
+    console.error('从 backup 恢复失败:', e);
+  }
+}
+if (fs.existsSync(SPEC_BACKUP_DIR) && (!fs.existsSync(SPEC_DIR) || fs.readdirSync(SPEC_DIR).length === 0)) {
+  try {
+    if (fs.existsSync(SPEC_DIR)) fs.rmSync(SPEC_DIR, { recursive: true, force: true });
+    fs.renameSync(SPEC_BACKUP_DIR, SPEC_DIR);
+  } catch (e) {}
+}
 
 // 确保必要目录存在
 if (!fs.existsSync(POSTS_DIR)) fs.mkdirSync(POSTS_DIR, { recursive: true });

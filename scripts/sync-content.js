@@ -11,8 +11,8 @@ const rootDir = path.resolve(__dirname, "..");
 loadEnv();
 console.log("已加载 .env 配置文件\n");
 
-// 从环境变量读取配置
-const ENABLE_CONTENT_SYNC = process.env.ENABLE_CONTENT_SYNC !== "false"; // 默认启用
+// 从环境变量读取配置 (默认关闭内容分离，确保本地文章目录安全)
+const ENABLE_CONTENT_SYNC = process.env.ENABLE_CONTENT_SYNC === "true"; // 仅在明确设置为 "true" 时启用
 const CONTENT_REPO_URL = process.env.CONTENT_REPO_URL || "";
 const CONTENT_DIR = process.env.CONTENT_DIR || path.join(rootDir, "content");
 
