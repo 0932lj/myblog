@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { siteConfig } from "../config";
 import localAnimeList from "../data/anime";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
@@ -82,13 +83,13 @@ export function getAnimeSourceConfigs(): Record<string, AnimeSourceConfig> {
 		bilibili: {
 			type: "json",
 			filename: "bilibili-data.json",
-			fetchOnDev: undefined,
+			fetchOnDev: siteConfig.bilibili?.fetchOnDev,
 			emptyDescription: i18n(I18nKey.animeEmptyBilibili),
 		},
 		bangumi: {
 			type: "json",
 			filename: "bangumi-data.json",
-			fetchOnDev: undefined,
+			fetchOnDev: siteConfig.bangumi?.fetchOnDev,
 			emptyDescription: i18n(I18nKey.animeEmptyBangumi),
 		},
 	};
@@ -106,12 +107,14 @@ export function getAnimeList(
 			animeList = currentConfig.data;
 		} else if (currentConfig.type === "json") {
 			const isDev = import.meta.env.DEV;
-			const shouldFetchOnDev = currentConfig.fetchOnDev ?? false;
-			const skipLoad = isDev && !shouldFetchOnDev;
+			const shouldFetchOnDev = currentConfig.fetchOnDev ?? true;
+			const dataPath = path.join(process.cwd(), `src/data/${currentConfig.filename}`);
+			const hasLocalData = fs.existsSync(dataPath);
+			const skipLoad = isDev && !shouldFetchOnDev && !hasLocalData;
 
 			if (skipLoad) {
 				console.log(
-					`[Dev] Skipping ${mode} data load (fetchOnDev is off).`,
+					`[Dev] Skipping ${mode} data load (fetchOnDev is off and no local data).`,
 				);
 				animeList = [];
 			} else {

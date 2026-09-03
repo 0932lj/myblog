@@ -66,11 +66,11 @@ export const siteConfig: SiteConfig = {
 	pageScaling: {
 		enable: true, // 是否开启自动缩放
 		targetWidth: 2000, // 目标宽度，低于此宽度时开始缩放
-	},
+	},																			
 
 	bangumi: {
-		userId: "your-bangumi-id", // 在此处设置你的Bangumi用户ID，可以设置为 "sai" 测试
-		fetchOnDev: false, // 是否在开发环境下获取 Bangumi 数据（默认 false），获取前先执行 pnpm build 构建 json 文件
+		userId: "980411", // 在此处设置你的Bangumi用户ID，可以设置为 "sai" 测试
+		fetchOnDev: true, // 是否在开发环境下获取 Bangumi 数据（默认 false），获取前先执行 pnpm build 构建 json 文件
 	},
 
 	bilibili: {
@@ -87,7 +87,7 @@ export const siteConfig: SiteConfig = {
 	},
 
 	anime: {
-		mode: "local", // 番剧页面模式："bangumi" 使用Bangumi API，"local" 使用本地配置，"bilibili" 使用Bilibili API
+		mode: "bangumi", // 番剧页面模式："bangumi" 使用Bangumi API，"local" 使用本地配置，"bilibili" 使用Bilibili API
 	},
 
 	// 文章列表布局配置
@@ -527,7 +527,7 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			class: "onload-animation",
 			// 动画延迟时间（毫秒），用于错开动画效果
 			animationDelay: 0,
-		},
+			},
 		{
 			// 组件类型：公告组件
 			type: "announcement",
@@ -681,7 +681,7 @@ export const pioConfig: import("./types/config").PioConfig = {
 	mode: "draggable", // 默认为可拖拽模式
 	hiddenOnMobile: true, // 默认在移动设备上隐藏
 	dialog: {
-		welcome: "Welcome to Mizuki Website!", // 欢迎词
+		welcome: "Welcome to myblog", // 欢迎词
 		touch: [
 			"What are you doing?",
 			"Stop touching me!",
