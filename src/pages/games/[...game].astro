@@ -1,0 +1,30 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+	const gamesDir = path.resolve("./public/games");
+	if (!fs.existsSync(gamesDir)) {
+		return [];
+	}
+
+	const entries = fs.readdirSync(gamesDir, { withFileTypes: true });
+	return entries
+		.filter((e) => e.isDirectory() && fs.existsSync(path.join(gamesDir, e.name, "index.html")))
+		.map((e) => {
+			const htmlPath = path.join(gamesDir, e.name, "index.html");
+			const htmlContent = fs.readFileSync(htmlPath, "utf-8");
+			return {
+				params: { game: e.name },
+				props: { htmlContent },
+			};
+		});
+}
+
+const { htmlContent = "<h1>Game Not Found</h1>" } = Astro.props;
+---
+
+<Fragment set:html={htmlContent} />
+

@@ -1,0 +1,131 @@
+---
+import { FilterTabs } from "@components/atoms/filter-tabs";
+import { PageHeader } from "@components/features/page-header";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+
+import GameCard from "../../components/features/games/GameCard.astro";
+import { gamesData, getGameStats } from "../../data/games";
+
+const stats = getGameStats();
+
+// 提取所有不重复分类
+const categoryMap: Record<string, { label: string; icon: string }> = {
+	puzzle: { label: "文字解密", icon: "material-symbols:psychology" },
+	arcade: { label: "街机动作", icon: "material-symbols:stadia-controller" },
+	action: { label: "动作竞技", icon: "material-symbols:swords" },
+	rpg: { label: "生涯模拟", icon: "material-symbols:sports-esports" },
+	casual: { label: "休闲模拟", icon: "material-symbols:scuba-diving" },
+};
+
+const uniqueCategories = Array.from(new Set(gamesData.map((g) => g.category)));
+
+const filterTabs = [
+	{
+		value: "all",
+		label: "全部游戏",
+		icon: "material-symbols:apps",
+		count: gamesData.length,
+	},
+	...uniqueCategories.map((cat) => ({
+		value: cat,
+		label: categoryMap[cat]?.label || cat,
+		icon: categoryMap[cat]?.icon || "material-symbols:sports-esports",
+		count: gamesData.filter((g) => g.category === cat).length,
+	})),
+];
+
+const title = "游戏大厅";
+const subtitle = "沉浸式独立 Web 游戏专区，无需下载，点击即玩。";
+---
+
+<MainGridLayout title={title} description={subtitle}>
+	<script>
+		import("../../scripts/right-sidebar-layout.js");
+		import { loadIconify } from "../../utils/icon-loader";
+
+		loadIconify().catch((error) => {
+			console.error("Failed to load Iconify:", error);
+		});
+	</script>
+
+	<script is:inline src="/js/filter-tabs-handler.js"></script>
+
+	<div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
+		<div class="card-base z-10 px-6 sm:px-9 py-6 relative w-full">
+			{/* 页面标题 */}
+			<PageHeader title={title} subtitle={subtitle} />
+
+			{/* 游戏大厅状态栏 */}
+			<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 p-4 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5">
+				<div class="flex items-center gap-3">
+					<div class="w-10 h-10 rounded-xl bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center shrink-0">
+						<iconify-icon icon="material-symbols:sports-esports" width="22" height="22" />
+					</div>
+					<div>
+						<div class="text-xs text-black/50 dark:text-white/50">已收录游戏</div>
+						<div class="text-lg font-bold text-black/90 dark:text-white/90">{stats.total} 款</div>
+					</div>
+				</div>
+
+				<div class="flex items-center gap-3">
+					<div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+						<iconify-icon icon="material-symbols:check-circle-rounded" width="22" height="22" />
+					</div>
+					<div>
+						<div class="text-xs text-black/50 dark:text-white/50">即点即玩</div>
+						<div class="text-lg font-bold text-black/90 dark:text-white/90">{stats.completed} 款</div>
+					</div>
+				</div>
+
+				<div class="flex items-center gap-3">
+					<div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+						<iconify-icon icon="material-symbols:star-rounded" width="22" height="22" />
+					</div>
+					<div>
+						<div class="text-xs text-black/50 dark:text-white/50">精选推荐</div>
+						<div class="text-lg font-bold text-black/90 dark:text-white/90">{stats.featured} 款</div>
+					</div>
+				</div>
+
+				<div class="flex items-center gap-3">
+					<div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
+						<iconify-icon icon="material-symbols:category-rounded" width="22" height="22" />
+					</div>
+					<div>
+						<div class="text-xs text-black/50 dark:text-white/50">涵盖类别</div>
+						<div class="text-lg font-bold text-black/90 dark:text-white/90">{stats.categories} 类</div>
+					</div>
+				</div>
+			</div>
+
+			{/* 分类过滤 Tab 栏 */}
+			<div class="mb-8">
+				<FilterTabs tabs={filterTabs} dataAttr="category" />
+			</div>
+
+			{/* 游戏卡片网格 */}
+			<div id="games-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+				{gamesData.map((game) => <GameCard game={game} />)}
+			</div>
+
+			{/* 筛选无结果时的空状态 */}
+			<div id="no-results" class="hidden text-center py-16">
+				<iconify-icon
+					icon="material-symbols:search-off-rounded"
+					width="64"
+					height="64"
+					class="text-black/15 dark:text-white/15 mb-4"
+				/>
+				<p class="text-black/40 dark:text-white/40 text-lg">暂无该分类下的游戏项目</p>
+			</div>
+
+			{/* 底部发布提示指引 */}
+			<div class="mt-12 p-4 rounded-xl border border-dashed border-black/10 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01] flex items-center gap-3 text-xs text-black/60 dark:text-white/60">
+				<iconify-icon icon="material-symbols:info-outline" width="20" height="20" class="text-[var(--primary)] shrink-0" />
+				<span>
+					想要上架更多游戏？直接将编译好的游戏静态文件夹放至 <code class="px-1.5 py-0.5 rounded bg-[var(--primary)]/10 text-[var(--primary)] font-mono">public/games/&lt;游戏名&gt;/</code>，并在 <code class="px-1.5 py-0.5 rounded bg-[var(--primary)]/10 text-[var(--primary)] font-mono">src/data/games.ts</code> 中登记即可全自动上线！
+				</span>
+			</div>
+		</div>
+	</div>
+</MainGridLayout>

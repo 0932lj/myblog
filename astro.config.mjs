@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import sitemap from "@astrojs/sitemap";
 import svelte, { vitePreprocess } from "@astrojs/svelte";
 import { pluginCollapsibleSections } from "@expressive-code/plugin-collapsible-sections";
@@ -71,6 +73,28 @@ function adminDevPlugin() {
 						res.writeHead(500, { "Content-Type": "application/json" });
 						res.end(JSON.stringify({ success: false, message: e.message }));
 						return;
+					}
+				}
+				next();
+			});
+		},
+	};
+}
+
+function gamesDevPlugin() {
+	return {
+		name: "games-dev-middleware",
+		configureServer(server) {
+			server.middlewares.use((req, res, next) => {
+				const url = req.url ? req.url.split("?")[0] : "";
+				if (url.startsWith("/games/")) {
+					const parts = url.split("/").filter(Boolean);
+					if (parts.length === 2 && parts[0] === "games") {
+						const gameName = parts[1];
+						const indexPath = path.resolve(`./public/games/${gameName}/index.html`);
+						if (fs.existsSync(indexPath)) {
+							req.url = `/games/${gameName}/index.html`;
+						}
 					}
 				}
 				next();
@@ -226,7 +250,7 @@ export default defineConfig({
 		],
 	},
 	vite: {
-		plugins: [tailwindcss(), adminDevPlugin()],
+		plugins: [tailwindcss(), adminDevPlugin(), gamesDevPlugin()],
 		build: {
 			// 静态资源处理优化，防止小图片转 base64 导致 HTML 体积过大
 			assetsInlineLimit: 4096,

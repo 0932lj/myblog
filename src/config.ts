@@ -272,8 +272,8 @@ export const navBarConfig: NavBarConfig = {
 		LinkPreset.Home,
 		LinkPreset.Archive,
 		{
-			name: "游戏项目",
-			url: "/game/",
+			name: "游戏大厅",
+			url: "/games/",
 			icon: "material-symbols:sports-esports",
 		},
 		// 支持自定义导航栏链接，支持多级菜单
